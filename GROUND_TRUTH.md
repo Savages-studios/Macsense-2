@@ -243,6 +243,34 @@ provenance is never blurred.
   demand and its entries are genuinely built in CI, but they
   do not persist to `main`.
 
+## M-2 gateway CI lane — completed (2026-11-15, estate fix program)
+
+- The gateway CI lane exists and is the `gateway-build` job of
+  `.github/workflows/web-ci.yml`: it builds the gateway, runs the full
+  server suite (`npm test` — the startup matrix in `server/test/`,
+  14 tests at this head), exports counts for the verification ledger,
+  and builds + boots the combined production image.
+- The lane was **red at head `02cd4f6a`** for a provisioning reason,
+  not a gateway defect: Web Studio CI run 42892891778 (2026-11-10)
+  shows `gateway-build` failing at *Boot combined studio container*
+  while the *Test gateway* step passed. Root cause, proven locally:
+  the image runs `NODE_ENV=production`, and since M-1 the gateway
+  fails closed — it refuses to start without `MACSENSE_CLIENT_TOKEN`.
+  The boot step provisioned only a dummy `GEMINI_API_KEY`, so the
+  container exited on boot and `/readyz` never answered. Booting the
+  built server locally reproduces both halves: production + no client
+  token → the M-1 refusal error; with a token → `/readyz` returns
+  `{"status":"ready",...}`.
+- Fix (this landing): the boot step now also passes a throwaway
+  CI-only `MACSENSE_CLIENT_TOKEN` to the container. No gateway code
+  changed; the fail-closed posture is untouched and is exactly what
+  the boot now satisfies. The lane's next push-to-main run is the
+  CI-side proof and will be recorded by the verification ledger job
+  itself.
+- Still open under M-2's restated scope: the Android `release` job's
+  failure at *Assemble release APK (unsigned)* (see the ledger seed
+  note above) — an Android build step, not part of the gateway lane.
+
 ## Estate rule
 
 Update this file after any significant repo change. No claims without verification.
