@@ -114,8 +114,12 @@ jobs:
       - name: Boot combined studio container
         id: docker-boot
         run: |
+          # MACSENSE_CLIENT_TOKEN is required: the image runs
+          # NODE_ENV=production, and since audit M-1 the gateway fails
+          # closed (refuses to start) without a client token. The token
+          # below is a throwaway CI-only value for this boot check.
           docker run -d --rm --name macsense-ci -p 8080:8080 \
-            -e GEMINI_API_KEY=ci-placeholder-not-a-real-key \
+            -e GEMINI_API_KEY=ci-placeholder-not-a-real-key -e MACSENSE_CLIENT_TOKEN=ci-only-token \
             macsense-studio:ci
           for i in $(seq 1 20); do
             if curl --fail --silent http://127.0.0.1:8080/readyz >/tmp/ready.json; then break; fi
