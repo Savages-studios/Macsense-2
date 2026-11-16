@@ -114,12 +114,21 @@ jobs:
       - name: Boot combined studio container
         id: docker-boot
         run: |
-          # MACSENSE_CLIENT_TOKEN is required: the image runs
+          # Two M-1 consequences this boot must satisfy:
+          # (1) MACSENSE_CLIENT_TOKEN is required: the image runs
           # NODE_ENV=production, and since audit M-1 the gateway fails
           # closed (refuses to start) without a client token. The token
           # below is a throwaway CI-only value for this boot check.
+          # (2) HOST=0.0.0.0: M-1 also made the gateway bind 127.0.0.1
+          # by default (loopback containment for direct runs). Inside
+          # a container that bind is unreachable through the published
+          # port (-p forwards to the container's network interface),
+          # so /readyz never answers. Binding all interfaces inside
+          # this ephemeral CI container is safe: the token gate above
+          # is the containment, and the config module permits a
+          # non-loopback bind when the token is set.
           docker run -d --rm --name macsense-ci -p 8080:8080 \
-            -e GEMINI_API_KEY=ci-placeholder-not-a-real-key -e MACSENSE_CLIENT_TOKEN=ci-only-token \
+            -e GEMINI_API_KEY=ci-placeholder-not-a-real-key -e MACSENSE_CLIENT_TOKEN=ci-only-token -e HOST=0.0.0.0 \
             macsense-studio:ci
           for i in $(seq 1 20); do
             if curl --fail --silent http://127.0.0.1:8080/readyz >/tmp/ready.json; then break; fi
