@@ -267,6 +267,22 @@ provenance is never blurred.
   the boot now satisfies. The lane's next push-to-main run is the
   CI-side proof and will be recorded by the verification ledger job
   itself.
+- **Correction (fix #162, 2026-11-15, same night):** that run
+  (43801656707, on the fix-#158 merge) still failed at *Boot combined
+  studio container* — the token fixed only the first of M-1's two
+  consequences for this lane. M-1 also changed the gateway's default
+  bind to `127.0.0.1` (pre-M-1 config had no host field; the server
+  listened on all interfaces). A loopback-bound process inside a
+  container is unreachable through `docker run -p` (the published
+  port forwards to the container's network interface), so `/readyz`
+  could never answer no matter how long the step polled. Proven at
+  socket level locally: container env + token, HOST unset → LISTEN
+  127.0.0.1:8080 only; HOST=0.0.0.0 → LISTEN 0.0.0.0:8080. The boot
+  step now also passes `-e HOST=0.0.0.0` — safe in this ephemeral CI
+  container because the token gate is the containment (and the
+  config module permits a non-loopback bind when the token is set).
+  The product's loopback default for direct runs is unchanged. The
+  run triggered by the #162 merge is the CI-side proof.
 - Still open under M-2's restated scope: the Android `release` job's
   failure at *Assemble release APK (unsigned)* (see the ledger seed
   note above) — an Android build step, not part of the gateway lane.
