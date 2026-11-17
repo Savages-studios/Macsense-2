@@ -1,4 +1,9 @@
 # Release Metrics Gate
+> **Claim state: unproven** — claim-gate labeling (evolution tranche 5, 2026-11-16).
+> The figures in this document are the release gate's declared targets and test requirements — thresholds the shell is required to meet, not measurements of a deployed product.
+> GROUND_TRUTH.md governs this repo's position: nothing deployed is evidenced, live state is unreached, and no customer-usable product is on.
+>
+
 
 This is the measurable production-readiness layer for MacSense. It is not a replacement for live browser testing, but it prevents the repo from claiming readiness without numbers.
 
